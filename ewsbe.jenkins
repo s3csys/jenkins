@@ -6,6 +6,10 @@ pipeline {
         pollSCM('H/2 * * * *')  // every 2 minutes, adjust as needed
     }
 
+    tools {
+        git 'mygit'
+    }
+
     parameters {
         booleanParam(name: 'DEPLOY_DEV', defaultValue: false, description: 'Deploy to Dev environment (auto by SCM)')
         booleanParam(name: 'DEPLOY_STAGING', defaultValue: false, description: 'Deploy to Staging environment (manual/remote)')
