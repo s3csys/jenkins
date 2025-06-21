@@ -228,7 +228,7 @@ pipeline {
         stage('Deploy to Production') {
             when { expression { params.DEPLOY_PROD } }
             steps {
-                input message: 'Approve Production Deployment?', ok: 'Deploy'
+                // input message: 'Approve Production Deployment?', ok: 'Deploy'
                 echo "Deploying to Production environment..."
                 bat """
                 @echo off
