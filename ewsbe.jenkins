@@ -1,0 +1,171 @@
+pipeline {
+    agent any
+
+    // Poll SCM on the BookEWS repo to trigger dev deployments automatically
+    triggers {
+        pollSCM('H/2 * * * *')  // every 2 minutes, adjust as needed
+    }
+
+    parameters {
+        booleanParam(name: 'DEPLOY_DEV', defaultValue: false, description: 'Deploy to Dev environment (auto by SCM)')
+        booleanParam(name: 'DEPLOY_STAGING', defaultValue: false, description: 'Deploy to Staging environment (manual/remote)')
+        booleanParam(name: 'DEPLOY_PROD', defaultValue: false, description: 'Deploy to Production environment (manual/remote)')
+        string(name: 'BRANCH', defaultValue: 'master', description: 'Git branch to build')
+    }
+
+    environment {
+        // Git repo for dev environment (BookEWS)
+        DEV_GIT_REPO = 'git@github.com:Fairsoftsolution/BookEWS.git'
+
+        // Deployment directories for each environment
+        DEPLOY_DIR_DEV = 'C:\\websites\\dev-ewsbe.fairsoftservices.com'
+        DEPLOY_DIR_STAGING = 'C:\\websites\\staging-ewsbe.fairsoftservices.com'
+        DEPLOY_DIR_PROD = 'C:\\websites\\ewsbe.fairsoftservices.com'
+    }
+
+    stages {
+        stage('Checkout Dev Project Code') {
+            when { expression { params.DEPLOY_DEV } }
+            steps {
+                echo "Checking out BookEWS repo branch ${params.BRANCH} for Dev deployment"
+                git branch: params.BRANCH, url: env.DEV_GIT_REPO, credentialsId: 'git_bookews'
+            }
+        }
+
+        stage('Deploy to Dev') {
+            when { expression { params.DEPLOY_DEV } }
+            steps {
+                echo "Deploying to Dev environment..."
+                bat """
+                @echo off
+                set "DEPLOY_DIR=${env.DEPLOY_DIR_DEV}"
+                set "SITE_NAME=dev-ewsbe.fairsoftservices.com"
+                set "RELEASES_DIR=%DEPLOY_DIR%\\releases"
+                set "SHARED_DIR=%DEPLOY_DIR%\\shared"
+                set "WORKSPACE_DIR=%WORKSPACE%\\BookEWS"
+
+                for /f %%i in ('powershell -NoProfile -Command "Get-Date -Format 'dddd-MMMM-dd-yyyy-HH-mm-tt'"') do set "TIMESTAMP=%%i"
+                set "NEW_RELEASE_DIR=%RELEASES_DIR%\\%TIMESTAMP%"
+
+                if not exist "%RELEASES_DIR%" mkdir "%RELEASES_DIR%"
+                mkdir "%NEW_RELEASE_DIR%"
+
+                robocopy "%WORKSPACE_DIR%" "%NEW_RELEASE_DIR%" /MIR /Z /XA:H /W:5 /NFL /NDL /NJH /NJS /NC /NS /NP
+
+                if exist "%DEPLOY_DIR%\\current" rmdir "%DEPLOY_DIR%\\current"
+                if exist "%NEW_RELEASE_DIR%\\Web.config" del "%NEW_RELEASE_DIR%\\Web.config"
+
+                mklink /D "%DEPLOY_DIR%\\current" "%NEW_RELEASE_DIR%"
+                mklink "%NEW_RELEASE_DIR%\\Web.config" "%SHARED_DIR%\\Web.config"
+
+                powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "Import-Module WebAdministration; Set-ItemProperty 'IIS:\\Sites\\%SITE_NAME%' -Name physicalPath -Value '%DEPLOY_DIR%\\current'; Stop-WebSite -Name '%SITE_NAME%'; Start-WebSite -Name '%SITE_NAME%'"
+
+                %windir%\\system32\\inetsrv\\appcmd.exe stop site "%SITE_NAME%"
+                rmdir /s /q "C:\\inetpub\\temp\\IIS Temporary Compressed Files\\%SITE_NAME%"
+                %windir%\\system32\\inetsrv\\appcmd.exe start site "%SITE_NAME%"
+
+                pushd "%RELEASES_DIR%"
+                for /f "skip=3 delims=" %%d in ('dir /b /ad /o-d') do (
+                    echo Deleting old build: %%d
+                    rmdir /s /q "%%d"
+                )
+                popd
+                """
+            }
+        }
+
+        stage('Deploy to Staging') {
+            when { expression { params.DEPLOY_STAGING } }
+            steps {
+                echo "Deploying to Staging environment..."
+                bat """
+                @echo off
+                set "DEPLOY_DIR=${env.DEPLOY_DIR_STAGING}"
+                set "SITE_NAME=staging-ewsbe.fairsoftservices.com"
+                set "RELEASES_DIR=%DEPLOY_DIR%\\releases"
+                set "SHARED_DIR=%DEPLOY_DIR%\\shared"
+                set "SOURCE_DIR=${env.DEPLOY_DIR_DEV}\\current"
+
+                for /f %%i in ('powershell -NoProfile -Command "Get-Date -Format 'dddd-MMMM-dd-yyyy-HH-mm-tt'"') do set "TIMESTAMP=%%i"
+                set "NEW_RELEASE_DIR=%RELEASES_DIR%\\%TIMESTAMP%"
+
+                if not exist "%RELEASES_DIR%" mkdir "%RELEASES_DIR%"
+                mkdir "%NEW_RELEASE_DIR%"
+
+                robocopy "%SOURCE_DIR%" "%NEW_RELEASE_DIR%" /MIR /Z /XA:H /W:5 /NFL /NDL /NJH /NJS /NC /NS /NP /XF Web.config
+
+                if exist "%DEPLOY_DIR%\\current" rmdir "%DEPLOY_DIR%\\current"
+                if exist "%NEW_RELEASE_DIR%\\Web.config" del "%NEW_RELEASE_DIR%\\Web.config"
+
+                mklink /D "%DEPLOY_DIR%\\current" "%NEW_RELEASE_DIR%"
+                mklink "%NEW_RELEASE_DIR%\\Web.config" "%SHARED_DIR%\\Web.config"
+
+                powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "Import-Module WebAdministration; Set-ItemProperty 'IIS:\\Sites\\%SITE_NAME%' -Name physicalPath -Value '%DEPLOY_DIR%\\current'; Stop-WebSite -Name '%SITE_NAME%'; Start-WebSite -Name '%SITE_NAME%'"
+
+                %windir%\\system32\\inetsrv\\appcmd.exe stop site "%SITE_NAME%"
+                rmdir /s /q "C:\\inetpub\\temp\\IIS Temporary Compressed Files\\%SITE_NAME%"
+                %windir%\\system32\\inetsrv\\appcmd.exe start site "%SITE_NAME%"
+
+                pushd "%RELEASES_DIR%"
+                for /f "skip=3 delims=" %%d in ('dir /b /ad /o-d') do (
+                    echo Deleting old build: %%d
+                    rmdir /s /q "%%d"
+                )
+                popd
+                """
+            }
+        }
+
+        stage('Deploy to Production') {
+            when { expression { params.DEPLOY_PROD } }
+            steps {
+                input message: 'Approve Production Deployment?', ok: 'Deploy'
+                echo "Deploying to Production environment..."
+                bat """
+                @echo off
+                set "DEPLOY_DIR=${env.DEPLOY_DIR_PROD}"
+                set "SITE_NAME=ewsbe.fairsoftservices.com"
+                set "RELEASES_DIR=%DEPLOY_DIR%\\releases"
+                set "SHARED_DIR=%DEPLOY_DIR%\\shared"
+                set "SOURCE_DIR=${env.DEPLOY_DIR_STAGING}\\current"
+
+                for /f %%i in ('powershell -NoProfile -Command "Get-Date -Format 'dddd-MMMM-dd-yyyy-HH-mm-tt'"') do set "TIMESTAMP=%%i"
+                set "NEW_RELEASE_DIR=%RELEASES_DIR%\\%TIMESTAMP%"
+
+                if not exist "%RELEASES_DIR%" mkdir "%RELEASES_DIR%"
+                mkdir "%NEW_RELEASE_DIR%"
+
+                robocopy "%SOURCE_DIR%" "%NEW_RELEASE_DIR%" /MIR /Z /XA:H /W:5 /NFL /NDL /NJH /NJS /NC /NS /NP /XF Web.config
+
+                if exist "%DEPLOY_DIR%\\current" rmdir "%DEPLOY_DIR%\\current"
+                if exist "%NEW_RELEASE_DIR%\\Web.config" del "%NEW_RELEASE_DIR%\\Web.config"
+
+                mklink /D "%DEPLOY_DIR%\\current" "%NEW_RELEASE_DIR%"
+                mklink "%NEW_RELEASE_DIR%\\Web.config" "%SHARED_DIR%\\Web.config"
+
+                powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "Import-Module WebAdministration; Set-ItemProperty 'IIS:\\Sites\\%SITE_NAME%' -Name physicalPath -Value '%DEPLOY_DIR%\\current'; Stop-WebSite -Name '%SITE_NAME%'; Start-WebSite -Name '%SITE_NAME%'"
+
+                %windir%\\system32\\inetsrv\\appcmd.exe stop site "%SITE_NAME%"
+                rmdir /s /q "C:\\inetpub\\temp\\IIS Temporary Compressed Files\\%SITE_NAME%"
+                %windir%\\system32\\inetsrv\\appcmd.exe start site "%SITE_NAME%"
+
+                pushd "%RELEASES_DIR%"
+                for /f "skip=3 delims=" %%d in ('dir /b /ad /o-d') do (
+                    echo Deleting old build: %%d
+                    rmdir /s /q "%%d"
+                )
+                popd
+                """
+            }
+        }
+    }
+
+    post {
+        success {
+            echo 'All deployments completed successfully!'
+        }
+        failure {
+            echo 'Deployment failed. Please check the logs.'
+        }
+    }
+}
