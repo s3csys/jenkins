@@ -26,6 +26,14 @@ pipeline {
     }
 
     stages {
+        stage('Clean Workspace') {
+            steps {
+                echo 'Cleaning the workspace before deployment...'
+                cleanWs()
+            }
+        }
+
+    stages {
         stage('Checkout Code') {
             when {
                 anyOf {
