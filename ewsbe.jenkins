@@ -45,7 +45,7 @@ pipeline {
             }
         }
         
-        stage('Checkout Dev Project Code') {
+        stage('Checkout Code') {
             when { expression { params.DEPLOY_DEV } }
             steps {
                 echo "Checking out BookEWS repo branch ${params.BRANCH} for Dev deployment"
