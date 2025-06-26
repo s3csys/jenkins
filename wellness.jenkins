@@ -2,7 +2,7 @@
 pipeline {
     agent any
 
-    // Poll SCM on the BookEWS repo to trigger dev deployments automatically
+    // Poll SCM to trigger pipeline automatically for dev deploys
     triggers {
         pollSCM('H/2 * * * *')  // every 2 minutes, adjust as needed
     }
@@ -19,16 +19,16 @@ pipeline {
     }
 
     environment {
-        // Git repo for dev environment (BookEWS)
-        DEV_GIT_REPO = 'git@github.com:Fairsoftsolution/BookEWS.git'
+        // Git repo for dev environment (wellnessplus)        
+        DEV_GIT_REPO = 'git@github.com:Fairsoftsolution/wellnessplus.git'
 
         // Deployment directories for each environment
-        DEPLOY_DIR_DEV = 'C:\\websites\\dev-ewsbe.fairsoftservices.com'
-        DEPLOY_DIR_STAGING = 'C:\\websites\\staging-ewsbe.fairsoftservices.com'
-        DEPLOY_DIR_PROD = 'C:\\websites\\ewsbe.fairsoftservices.com'
+        DEPLOY_DIR_DEV = 'C:\\websites\\dev-wellnessplus.fairsoftservices.com'
+        DEPLOY_DIR_STAGING = 'C:\\websites\\staging-wellnessplus.fairsoftservices.com'
+        DEPLOY_DIR_PROD = 'C:\\websites\\wellnessplus.fairsoftservices.com'
         
         // Credentials IDs
-        GIT_CREDENTIALS_ID = 'git_bookews'
+        GIT_CREDENTIALS_ID = 'wellnessplus'
         
         // Deployment settings
         RELEASES_TO_KEEP = '3'
@@ -60,8 +60,8 @@ pipeline {
                 script {
                     build.deployApp([
                      DEPLOY_DIR: "${env.DEPLOY_DIR_DEV}",
-                     SITE_NAME: 'dev-ewsbe.fairsoftservices.com',
-                     SOURCE_DIR: "%WORKSPACE%\\BookEWS"
+                     SITE_NAME: 'dev-wellnessplus.fairsoftservices.com',
+                     SOURCE_DIR: "%WORKSPACE%\\wellnessplus"
                     ])
                 }
             }
@@ -73,9 +73,9 @@ pipeline {
                 echo "Deploying to Staging environment..."
                 script {
                     build.deployApp([
-                        DEPLOY_DIR: "${env.DEPLOY_DIR_STAGING}",
-                        SITE_NAME: 'staging-ewsbe.fairsoftservices.com',
-                        SOURCE_DIR: "${env.DEPLOY_DIR_DEV}\\current"
+                     DEPLOY_DIR: "${env.DEPLOY_DIR_STAGING}",
+                     SITE_NAME: 'staging-wellnessplus.fairsoftservices.com',
+                     SOURCE_DIR: "${env.DEPLOY_DIR_DEV}\\current"
                     ])
                 }
             }
@@ -84,12 +84,12 @@ pipeline {
         stage('Deploy to Production') {
             when { expression { params.DEPLOY_PROD } }
             steps {
-                echo "Deploying to Prod environment..."
+                echo "Deploying to Production environment..."
                 script {
                     build.deployApp([
-                        DEPLOY_DIR: "${env.DEPLOY_DIR_PROD}",
-                        SITE_NAME: 'ewsbe.fairsoftservices.com',
-                        SOURCE_DIR: "${env.DEPLOY_DIR_STAGING}\\current"
+                     DEPLOY_DIR: "${env.DEPLOY_DIR_PROD}",
+                     SITE_NAME: 'wellnessplus.fairsoftservices.com',
+                     SOURCE_DIR: "${env.DEPLOY_DIR_STAGING}\\current"
                     ])
                 }
             }

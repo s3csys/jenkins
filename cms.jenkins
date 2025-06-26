@@ -19,7 +19,7 @@ pipeline {
     }
 
     environment {
-        // Git repo for dev environment (BookEWS)        
+        // Git repo for dev environment (cms)        
         DEV_GIT_REPO = 'git@github.com:Fairsoftsolution/CManagement.git'
 
         // Deployment directories for each environment
@@ -48,7 +48,7 @@ pipeline {
         stage('Checkout Code') {
             when { expression { params.DEPLOY_DEV } }
             steps {
-                echo "Checking out BookEWS repo branch ${params.BRANCH} for Dev deployment"
+                echo "Checking out ${DEV_GIT_REPO} repo branch ${params.BRANCH} for Dev deployment"
                 git branch: params.BRANCH, url: env.DEV_GIT_REPO, credentialsId: env.GIT_CREDENTIALS_ID
             }
         }
