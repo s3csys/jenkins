@@ -12,7 +12,7 @@ pipeline {
     }
 
     parameters {
-        booleanParam(name: 'DEPLOY_DEV', defaultValue: false, description: 'Deploy to Dev environment (auto by SCM)')
+        booleanParam(name: 'DEPLOY_DEV', defaultValue: false, description: 'Deploy to Dev environment (manual/remote)')
         booleanParam(name: 'DEPLOY_STAGING', defaultValue: false, description: 'Deploy to Staging environment (manual/remote)')
         booleanParam(name: 'DEPLOY_PROD', defaultValue: false, description: 'Deploy to Production environment (manual/remote)')
         string(name: 'BRANCH', defaultValue: 'main', description: 'Git branch to build')
@@ -71,13 +71,15 @@ pipeline {
                 setlocal enabledelayedexpansion
                 set "DEPLOY_DIR=${env.DEPLOY_DIR_DEV}"
                 set "DOCS_DIR=!DEPLOY_DIR!\\current\\uploadedDocuments"
-
+                
                 REM === Check if uploadedDocuments directory exists ===
                 if not exist "!DOCS_DIR!" (
                     echo [WARNING] uploadedDocuments directory not found ...
+                    goto :end
                 )
-
+                
                 set FILES="EWS Format.xlsx" "EWS Format1.xlsx" "Followups.xlsx" "Dashboard_Followups.xlsx"
+                
                 for %%F in (!FILES!) do (
                     if exist "!DOCS_DIR!\\%%~F" (
                         echo [INFO] Setting permissions for %%~F
@@ -85,11 +87,13 @@ pipeline {
                         if !errorlevel! neq 0 (
                             echo [ERROR] Failed to set permissions for %%~F (Error: !errorlevel!)
                         )
-                    ) else (
+                    ) 
+                    if not exist "!DOCS_DIR!\\%%~F" (
                         echo [WARNING] File not found: %%~F
                     )
                 )
-
+                
+                :end
                 endlocal
                 """
             }
@@ -117,9 +121,11 @@ pipeline {
                 REM === Check if uploadedDocuments directory exists ===
                 if not exist "!DOCS_DIR!" (
                     echo [WARNING] uploadedDocuments directory not found ...
+                    goto :end
                 )
 
                 set FILES="EWS Format.xlsx" "EWS Format1.xlsx" "Followups.xlsx" "Dashboard_Followups.xlsx"
+
                 for %%F in (!FILES!) do (
                     if exist "!DOCS_DIR!\\%%~F" (
                         echo [INFO] Setting permissions for %%~F
@@ -127,11 +133,13 @@ pipeline {
                         if !errorlevel! neq 0 (
                             echo [ERROR] Failed to set permissions for %%~F (Error: !errorlevel!)
                         )
-                    ) else (
+                    ) 
+                    if not exist "!DOCS_DIR!\\%%~F" (
                         echo [WARNING] File not found: %%~F
                     )
                 )
 
+                :end
                 endlocal
                 """
             }
@@ -159,9 +167,11 @@ pipeline {
                 REM === Check if uploadedDocuments directory exists ===
                 if not exist "!DOCS_DIR!" (
                     echo [WARNING] uploadedDocuments directory not found ...
+                    goto :end
                 )
 
                 set FILES="EWS Format.xlsx" "EWS Format1.xlsx" "Followups.xlsx" "Dashboard_Followups.xlsx"
+
                 for %%F in (!FILES!) do (
                     if exist "!DOCS_DIR!\\%%~F" (
                         echo [INFO] Setting permissions for %%~F
@@ -169,11 +179,13 @@ pipeline {
                         if !errorlevel! neq 0 (
                             echo [ERROR] Failed to set permissions for %%~F (Error: !errorlevel!)
                         )
-                    ) else (
+                    ) 
+                    if not exist "!DOCS_DIR!\\%%~F" (
                         echo [WARNING] File not found: %%~F
                     )
                 )
 
+                :end
                 endlocal
                 """
             }
