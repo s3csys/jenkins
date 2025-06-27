@@ -3,9 +3,9 @@ pipeline {
     agent any
 
     // Poll SCM to trigger pipeline automatically for dev deploys
-    triggers {
-        pollSCM('H/2 * * * *')  // every 2 minutes, adjust as needed
-    }
+    // triggers {
+    //     pollSCM('H/2 * * * *')  // every 2 minutes, adjust as needed
+    // }
 
     tools {
         git 'mygit'
@@ -106,6 +106,7 @@ pipeline {
                      SOURCE_DIR: "${env.DEPLOY_DIR_DEV}\\current"
                     ])
                 }
+                
                 echo "Setting file permissions for uploaded Excel documents..."
                 bat """
                 @echo off
@@ -147,7 +148,7 @@ pipeline {
                      SOURCE_DIR: "${env.DEPLOY_DIR_STAGING}\\current"
                     ])
                 }
-            }
+                
                 echo "Setting file permissions for uploaded Excel documents..."
                 bat """
                 @echo off
@@ -175,6 +176,7 @@ pipeline {
 
                 endlocal
                 """
+            }
         }
     }
 

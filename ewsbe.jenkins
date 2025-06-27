@@ -3,9 +3,9 @@ pipeline {
     agent any
 
     // Poll SCM on the BookEWS repo to trigger dev deployments automatically
-    triggers {
-        pollSCM('H/2 * * * *')  // every 2 minutes, adjust as needed
-    }
+    // triggers {
+    //     pollSCM('H/2 * * * *')  // every 2 minutes, adjust as needed
+    // }
 
     tools {
         git 'mygit'
