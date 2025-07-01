@@ -1,0 +1,170 @@
+@Library('sharedlib')_
+pipeline {
+    agent any
+
+    tools {
+        git 'mygit'
+    }
+
+    parameters {
+        booleanParam(name: 'DEPLOY_PROD', defaultValue: false, description: 'Deploy to Prod environment (manual/remote)')
+        string(name: 'BRANCH', defaultValue: 'master', description: 'Git branch to build')
+    }
+
+    environment {
+        // Git repo for dev environment (support)
+        PROD_GIT_REPO = 'git@github.com:Fairsoftsolution/Support.git'
+
+        // Deployment directories for each environment
+        DEPLOY_DIR_PROD = 'C:\\websites\\support.fairsoftservices.com'
+        
+        // Credentials IDs
+        GIT_CREDENTIALS_ID = 'support'
+        
+        // Deployment settings
+        RELEASES_TO_KEEP = '3'
+        
+        // Notification settings
+        DISCORD_WEBHOOK_URL = credentials('discord-webhook-url')
+    }
+
+    stages {
+        stage('Clean Workspace') {
+            steps {
+                echo 'Cleaning the workspace before deployment...'
+                cleanWs()
+            }
+        }
+        
+        stage('Checkout Code') {
+            when { expression { params.DEPLOY_PROD } }
+            steps {
+                echo "Checking out ${PROD_GIT_REPO} repo branch ${params.BRANCH} for Dev deployment"
+                git branch: params.BRANCH, url: env.PROD_GIT_REPO, credentialsId: env.GIT_CREDENTIALS_ID
+            }
+        }
+
+        stage('Deploy to PROD') {
+            when { expression { params.DEPLOY_PROD } }
+            steps {
+                echo "Deploying to PROD environment..."
+                script {
+                    build.deployApp([
+                     DEPLOY_DIR: "${env.DEPLOY_DIR_PROD}",
+                     SITE_NAME: 'support.fairsoftservices.com',
+                     SOURCE_DIR: "%WORKSPACE%\\Support"
+                    ])
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            echo 'Deployment pipeline completed successfully!'
+            script {
+                def deployEnv = ''
+                def deployDetails = ''
+                def deployTime = new Date().format('yyyy-MM-dd HH:mm:ss')
+                
+                if (params.DEPLOY_DEV) {
+                    deployEnv = 'Dev'
+                    deployDetails = "Branch: ${params.BRANCH}\nDeployment Directory: ${env.DEPLOY_DIR_DEV}"
+                    echo 'Dev deployment was successful!'
+                } else if (params.DEPLOY_STAGING) {
+                    deployEnv = 'Staging'
+                    deployDetails = "Branch: ${params.BRANCH}\nDeployment Directory: ${env.DEPLOY_DIR_STAGING}"
+                    echo 'Staging deployment was successful!'
+                } else if (params.DEPLOY_PROD) {
+                    deployEnv = 'Production'
+                    deployDetails = "Branch: ${params.BRANCH}\nDeployment Directory: ${env.DEPLOY_DIR_PROD}"
+                    echo 'Production deployment was successful!'
+                }
+                
+                if (deployEnv) {
+                    try {
+                        // Send Discord notification with rich formatting
+                        discordSend (
+                            webhookURL: env.DISCORD_WEBHOOK_URL,
+                            title: "✅ support ${deployEnv} Deployment - SUCCESS",
+                            description: "${deployEnv} deployment completed successfully\n\n**Details:**\n${deployDetails}",
+                            footer: "Build: #${BUILD_NUMBER} | ${deployTime}",
+                            link: env.BUILD_URL,
+                            result: currentBuild.currentResult,
+                            thumbnail: "https://jenkins.io/images/logos/jenkins/jenkins.png",
+                            customUsername: "Jenkins support Pipeline"
+                        )
+                    } catch (Exception e) {
+                        echo "Warning: Could not send Discord notification: ${e.message}"
+                    }
+                }
+            }
+        }
+        failure {
+            echo 'Deployment pipeline failed. Check logs for details.'
+            script {
+                def deployEnv = ''
+                def failureReason = ''
+                def deployTime = new Date().format('yyyy-MM-dd HH:mm:ss')
+                
+                if (params.DEPLOY_DEV) {
+                    deployEnv = 'Dev'
+                    failureReason = "Check the build logs for detailed error information."
+                    echo 'Dev deployment failed!'
+                } else if (params.DEPLOY_STAGING) {
+                    deployEnv = 'Staging'
+                    failureReason = "Check the build logs for detailed error information."
+                    echo 'Staging deployment failed!'
+                } else if (params.DEPLOY_PROD) {
+                    deployEnv = 'Production'
+                    failureReason = "Check the build logs for detailed error information."
+                    echo 'Production deployment failed!'
+                }
+                
+                if (deployEnv) {
+                    try {
+                        // Send Discord notification with rich formatting for failure
+                        discordSend (
+                            webhookURL: env.DISCORD_WEBHOOK_URL,
+                            title: "❌ support ${deployEnv} Deployment - FAILED",
+                            description: "${deployEnv} deployment failed!\n\n**Error Information:**\n${failureReason}\n\n**Build Details:**\nBranch: ${params.BRANCH}",
+                            footer: "Build: #${BUILD_NUMBER} | ${deployTime}",
+                            link: env.BUILD_URL,
+                            result: currentBuild.currentResult,
+                            thumbnail: "https://jenkins.io/images/logos/jenkins/jenkins.png",
+                            customUsername: "Jenkins support Pipeline"
+                        )
+                    } catch (Exception e) {
+                        echo "Warning: Could not send Discord notification: ${e.message}"
+                    }
+                }
+            }
+        }
+        always {
+            echo 'Performing cleanup operations...'
+            cleanWs()
+            echo 'Cleanup completed successfully.'
+            
+            // Optional: Notify about build completion regardless of result
+            echo "Build ${currentBuild.fullDisplayName} completed with result: ${currentBuild.currentResult}"
+
+            // Send a simple notification about build completion
+            script {
+                try {
+                    discordSend (
+                        webhookURL: env.DISCORD_WEBHOOK_URL,
+                        title: "support Pipeline - Build #${BUILD_NUMBER} Complete",
+                        description: "Build completed with result: ${currentBuild.currentResult}\nTotal execution time: ${currentBuild.durationString}",
+                        footer: "${new Date().format('yyyy-MM-dd HH:mm:ss')}",
+                        link: env.BUILD_URL,
+                        result: currentBuild.currentResult,
+                        thumbnail: "https://jenkins.io/images/logos/jenkins/jenkins.png",
+                        customUsername: "Jenkins support Pipeline"
+                    )
+                } catch (Exception e) {
+                    echo "Warning: Could not send Discord notification: ${e.message}"
+                }
+            }
+        }
+    }
+}
