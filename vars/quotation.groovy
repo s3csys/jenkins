@@ -53,7 +53,7 @@ def deployApp(envParams) {
 
     REM ===  Update IIS site path and restart site using PowerShell ===
     echo [INFO] Updating IIS site configuration
-    powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "Import-Module WebAdministration; Set-ItemProperty 'IIS:\\Sites\\!SITE_NAME!' -Name physicalPath -Value '!DEPLOY_DIR!\\current'; Stop-WebSite -Name '!SITE_NAME!'; Start-WebSite -Name '!SITE_NAME!'"
+    powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "Import-Module WebAdministration; Set-ItemProperty 'IIS:\\Sites\\!SITE_NAME!' -Name physicalPath -Value '!DEPLOY_DIR!\\current\\wwwroot'; Stop-WebSite -Name '!SITE_NAME!'; Start-WebSite -Name '!SITE_NAME!'"
 
     REM ===  Clean IIS temp files ===
     echo [INFO] Cleaning IIS temporary files

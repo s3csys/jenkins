@@ -14,7 +14,7 @@ pipeline {
 
     environment {
         // Git repo for dev environment (BookEWS)
-        DEV_GIT_REPO = 'git@github.com:Fairsoftsolution/Quotations.git'
+        DEV_GIT_REPO = 'git@github.com:Fairsoftsolution/Quotation.git'
 
         // Deployment directories for each environment
         DEPLOY_DIR_DEV = 'C:\\websites\\dev-quotation.fairsoftservices.com'
@@ -107,13 +107,13 @@ pipeline {
                         // Send Discord notification with rich formatting
                         discordSend (
                             webhookURL: env.DISCORD_WEBHOOK_URL,
-                            title: "✅ EWSBE ${deployEnv} Deployment - SUCCESS",
+                            title: "✅ quotation ${deployEnv} Deployment - SUCCESS",
                             description: "${deployEnv} deployment completed successfully\n\n**Details:**\n${deployDetails}",
                             footer: "Build: #${BUILD_NUMBER} | ${deployTime}",
                             link: env.BUILD_URL,
                             result: currentBuild.currentResult,
                             thumbnail: "https://jenkins.io/images/logos/jenkins/jenkins.png",
-                            customUsername: "Jenkins EWSBE Pipeline"
+                            customUsername: "Jenkins quotation Pipeline"
                         )
                     } catch (Exception e) {
                         echo "Warning: Could not send Discord notification: ${e.message}"
@@ -147,13 +147,13 @@ pipeline {
                         // Send Discord notification with rich formatting for failure
                         discordSend (
                             webhookURL: env.DISCORD_WEBHOOK_URL,
-                            title: "❌ EWSBE ${deployEnv} Deployment - FAILED",
+                            title: "❌ quotation ${deployEnv} Deployment - FAILED",
                             description: "${deployEnv} deployment failed!\n\n**Error Information:**\n${failureReason}\n\n**Build Details:**\nBranch: ${params.BRANCH}",
                             footer: "Build: #${BUILD_NUMBER} | ${deployTime}",
                             link: env.BUILD_URL,
                             result: currentBuild.currentResult,
                             thumbnail: "https://jenkins.io/images/logos/jenkins/jenkins.png",
-                            customUsername: "Jenkins EWSBE Pipeline"
+                            customUsername: "Jenkins quotation Pipeline"
                         )
                     } catch (Exception e) {
                         echo "Warning: Could not send Discord notification: ${e.message}"
@@ -174,13 +174,13 @@ pipeline {
                 try {
                     discordSend (
                         webhookURL: env.DISCORD_WEBHOOK_URL,
-                        title: "EWSBE Pipeline - Build #${BUILD_NUMBER} Complete",
+                        title: "quotation Pipeline - Build #${BUILD_NUMBER} Complete",
                         description: "Build completed with result: ${currentBuild.currentResult}\nTotal execution time: ${currentBuild.durationString}",
                         footer: "${new Date().format('yyyy-MM-dd HH:mm:ss')}",
                         link: env.BUILD_URL,
                         result: currentBuild.currentResult,
                         thumbnail: "https://jenkins.io/images/logos/jenkins/jenkins.png",
-                        customUsername: "Jenkins EWSBE Pipeline"
+                        customUsername: "Jenkins quotation Pipeline"
                     )
                 } catch (Exception e) {
                     echo "Warning: Could not send Discord notification: ${e.message}"
