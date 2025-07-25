@@ -45,8 +45,8 @@ def deployApp(envParams) {
         echo [ERROR] Failed to create current symlink
         exit /b 1
     )
-    mklink /H "!NEW_RELEASE_DIR!\\Web.config" "!SHARED_DIR!\\Web.config" || (
-        echo [ERROR] Failed to create Web.config symlink
+    copy /Y "!SHARED_DIR!\\Web.config" "!NEW_RELEASE_DIR!\\Web.config" || (
+        echo [ERROR] Failed to copy Web.config file from shared directory
         exit /b 1
     )
 
@@ -76,8 +76,14 @@ def deployApp(envParams) {
     if !errorlevel! neq 0 (
         echo [WARNING] Failed to delete temp directory (Error: !errorlevel!)
     )
-    
+
     :temp_dir_check_done
+    REM === Recycling App Pool ===
+    echo [INFO] Recycling App Pool: !SITE_NAME!
+    %windir%\\system32\\inetsrv\\appcmd.exe recycle apppool /apppool.name:"!SITE_NAME!"
+    
+    REM === Starting the site to ensure it's running ===
+    echo [INFO] Starting Site: !SITE_NAME!
     %windir%\\system32\\inetsrv\\appcmd.exe start site "!SITE_NAME!"
 
     REM ===  Clean old releases (keep last N) ===
