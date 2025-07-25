@@ -19,6 +19,9 @@ pipeline {
         // Deployment directories for each environment
         DEPLOY_DIR_DEV = 'C:\\websites\\dev-quotation.fairsoftservices.com'
         DEPLOY_DIR_PROD = 'C:\\websites\\quotation.fairsoftservices.com'
+
+        API_SERVER_DEV = 'dev-quotation'
+        API_SERVER_PROD = 'quotation'
         
         // Credentials IDs
         GIT_CREDENTIALS_ID = 'quotation'
@@ -51,24 +54,13 @@ pipeline {
             steps {
                 echo "Deploying to Dev environment..."
                 script {
-                    build.deployApp([
+                    quotation.deployApp([
                      DEPLOY_DIR: "${env.DEPLOY_DIR_DEV}",
                      SITE_NAME: 'dev-quotation.fairsoftservices.com',
-                     SOURCE_DIR: "%WORKSPACE%\\"
+                     SOURCE_DIR: "%WORKSPACE%\\QuotationPilloo.Server\\publish",
+                     API_SERVER: "${env.API_SERVER_DEV}"
                     ])
                 }
-
-                echo "Restarting the api service..."
-                bat """
-                @echo off
-                setlocal enabledelayedexpansion
-                set "DEPLOY_DIR=${env.DEPLOY_DIR_DEV}"
-                
-                REM === Restarting the api service ===                
-                powershell -Command "Stop-Service dev-quotation; Start-Service dev-quotation; Get-Service dev-quotation"
-
-                """
-
             }
         }
 
@@ -77,22 +69,13 @@ pipeline {
             steps {
                 echo "Deploying to Prod environment..."
                 script {
-                    build.deployApp([
+                    quotation.deployApp([
                         DEPLOY_DIR: "${env.DEPLOY_DIR_PROD}",
                         SITE_NAME: 'quotation.fairsoftservices.com',
-                        SOURCE_DIR: "${env.DEPLOY_DIR_DEV}\\current"
+                        SOURCE_DIR: "${env.DEPLOY_DIR_DEV}\\current",
+                        API_SERVER: "${env.API_SERVER_PROD}"
                     ])
                 }
-                echo "Restarting the api service..."
-                bat """
-                @echo off
-                setlocal enabledelayedexpansion
-                set "DEPLOY_DIR=${env.DEPLOY_DIR_DEV}"
-                
-                REM === Restarting the api service ===                
-                powershell -Command "Stop-Service dev-quotation; Start-Service dev-quotation; Get-Service dev-quotation"
-
-                """
             }
         }
     }
