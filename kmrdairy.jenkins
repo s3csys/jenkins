@@ -53,7 +53,7 @@ pipeline {
             steps {
                 echo "Deploying to Dev environment..."
                 script {
-                    build.deployApp([
+                    kmrdairy.deployApp([
                      DEPLOY_DIR: "${env.DEPLOY_DIR_DEV}",
                      SITE_NAME: 'dev-kmrdairy.fairsoftservices.com',
                      SOURCE_DIR: "%WORKSPACE%\\KarimnagarDairy\\karimnagardairy.client\\dist"
@@ -67,7 +67,7 @@ pipeline {
             steps {
                 echo "Deploying to Staging environment..."
                 script {
-                    build.deployApp([
+                    kmrdairy.deployApp([
                         DEPLOY_DIR: "${env.DEPLOY_DIR_STAGING}",
                         SITE_NAME: 'staging-kmrdairy.fairsoftservices.com',
                         SOURCE_DIR: "${env.DEPLOY_DIR_DEV}\\current"
@@ -81,7 +81,7 @@ pipeline {
             steps {
                 echo "Deploying to Prod environment..."
                 script {
-                    build.deployApp([
+                    kmrdairy.deployApp([
                         DEPLOY_DIR: "${env.DEPLOY_DIR_PROD}",
                         SITE_NAME: 'kmrdairy.fairsoftservices.com',
                         SOURCE_DIR: "${env.DEPLOY_DIR_STAGING}\\current"
