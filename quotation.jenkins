@@ -54,7 +54,7 @@ pipeline {
             steps {
                 echo "Deploying to Dev environment..."
                 script {
-                    quotation.deployApp([
+                    api.deployApp([
                      DEPLOY_DIR: "${env.DEPLOY_DIR_DEV}",
                      SITE_NAME: 'dev-quotation.fairsoftservices.com',
                      SOURCE_DIR: "%WORKSPACE%\\QuotationPilloo.Server\\publish",
@@ -69,7 +69,7 @@ pipeline {
             steps {
                 echo "Deploying to Prod environment..."
                 script {
-                    quotation.deployApp([
+                    api.deployApp([
                         DEPLOY_DIR: "${env.DEPLOY_DIR_PROD}",
                         SITE_NAME: 'quotation.fairsoftservices.com',
                         SOURCE_DIR: "${env.DEPLOY_DIR_DEV}\\current",

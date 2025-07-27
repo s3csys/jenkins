@@ -21,6 +21,11 @@ pipeline {
         DEPLOY_DIR_DEV = 'C:\\websites\\dev-kmrdairy.fairsoftservices.com'
         DEPLOY_DIR_STAGING = 'C:\\websites\\staging-kmrdairy.fairsoftservices.com'
         DEPLOY_DIR_PROD = 'C:\\websites\\kmrdairy.fairsoftservices.com'
+
+        // API server names
+        API_SERVER_DEV = 'dev-kmrdairy'
+        API_SERVER_STAGING = 'staging-kmrdairy'
+        API_SERVER_PROD = 'kmrdairy'
         
         // Credentials IDs
         GIT_CREDENTIALS_ID = 'kmrdairy'
@@ -53,10 +58,11 @@ pipeline {
             steps {
                 echo "Deploying to Dev environment..."
                 script {
-                    kmrdairy.deployApp([
+                    api.deployApp([
                      DEPLOY_DIR: "${env.DEPLOY_DIR_DEV}",
                      SITE_NAME: 'dev-kmrdairy.fairsoftservices.com',
-                     SOURCE_DIR: "%WORKSPACE%\\KarimnagarDairy\\karimnagardairy.client\\dist"
+                     SOURCE_DIR: "%WORKSPACE%\\KarimnagarDairy\\KarimnagarDairy.Server\\publish",
+                     API_SERVER: "${env.API_SERVER_DEV}"
                     ])
                 }
             }
@@ -67,10 +73,11 @@ pipeline {
             steps {
                 echo "Deploying to Staging environment..."
                 script {
-                    kmrdairy.deployApp([
-                        DEPLOY_DIR: "${env.DEPLOY_DIR_STAGING}",
-                        SITE_NAME: 'staging-kmrdairy.fairsoftservices.com',
-                        SOURCE_DIR: "${env.DEPLOY_DIR_DEV}\\current"
+                    api.deployApp([
+                     DEPLOY_DIR: "${env.DEPLOY_DIR_STAGING}",
+                     SITE_NAME: 'staging-kmrdairy.fairsoftservices.com',
+                     SOURCE_DIR: "${env.DEPLOY_DIR_DEV}\\current",
+                     API_SERVER: "${env.API_SERVER_STAGING}"
                     ])
                 }
             }
@@ -81,10 +88,11 @@ pipeline {
             steps {
                 echo "Deploying to Prod environment..."
                 script {
-                    kmrdairy.deployApp([
-                        DEPLOY_DIR: "${env.DEPLOY_DIR_PROD}",
-                        SITE_NAME: 'kmrdairy.fairsoftservices.com',
-                        SOURCE_DIR: "${env.DEPLOY_DIR_STAGING}\\current"
+                    api.deployApp([
+                     DEPLOY_DIR: "${env.DEPLOY_DIR_PROD}",
+                     SITE_NAME: 'kmrdairy.fairsoftservices.com',
+                     SOURCE_DIR: "${env.DEPLOY_DIR_STAGING}\\current",
+                     API_SERVER: "${env.API_SERVER_PROD}"
                     ])
                 }
             }
