@@ -65,6 +65,10 @@ pipeline {
                      API_SERVER: "${env.API_SERVER_DEV}"
                     ])
                 }
+                echo "Moving the web.config"
+                bat """
+                move ${env.DEPLOY_DIR_DEV}\\current\\wwwroot\\web.config ${env.DEPLOY_DIR_DEV}\\current\\web.config
+                """
             }
         }
 
@@ -80,6 +84,10 @@ pipeline {
                      API_SERVER: "${env.API_SERVER_STAGING}"
                     ])
                 }
+                echo "Moving the web.config"
+                bat """
+                move ${env.DEPLOY_DIR_STAGING}\\current\\wwwroot\\web.config ${env.DEPLOY_DIR_STAGING}\\current\\web.config
+                """
             }
         }
 
@@ -95,6 +103,10 @@ pipeline {
                      API_SERVER: "${env.API_SERVER_PROD}"
                     ])
                 }
+                echo "Moving the web.config"
+                bat """
+                move ${env.DEPLOY_DIR_PROD}\\current\\wwwroot\\web.config ${env.DEPLOY_DIR_PROD}\\current\\web.config
+                """
             }
         }
     }
