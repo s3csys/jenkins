@@ -61,7 +61,7 @@ pipeline {
                     api.deployApp([
                      DEPLOY_DIR: "${env.DEPLOY_DIR_DEV}",
                      SITE_NAME: 'dev-kmrdairy.fairsoftservices.com',
-                     SOURCE_DIR: "%WORKSPACE%\\KarimnagarDairy\\Karimnagar.Server\\publish",
+                     SOURCE_DIR: "%WORKSPACE%\\Karimnagar.Server\\publish",
                      API_SERVER: "${env.API_SERVER_DEV}"
                     ])
                 }
