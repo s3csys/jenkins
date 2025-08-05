@@ -1,6 +1,8 @@
 @Library('sharedlib')_
 pipeline {
-    agent any
+    agent {
+        label 'pilloo'        
+    }
 
     tools {
         git 'mygit'
