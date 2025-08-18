@@ -30,7 +30,7 @@ pipeline {
         }
 
         stage('Checkout Code') {
-            when { expression { params.DEPLOY_DEV } }
+            when { expression { params.DEPLOY_PROD } }
             steps {
                 echo "Checking out ${DEV_GIT_REPO} repo branch ${params.BRANCH} for Dev deployment"
                 git branch: params.BRANCH, url: env.DEV_GIT_REPO, credentialsId: env.GIT_CREDENTIALS_ID
