@@ -40,7 +40,7 @@ def deployApp(envParams) {
     )
 
     REM ===  Create new symlinks ===
-    echo [INFO] Creating new symlinks
+    echo [INFO] Copying the web.config file
     mklink /D "!DEPLOY_DIR!\\current" "!NEW_RELEASE_DIR!" || (
         echo [ERROR] Failed to create current symlink
         exit /b 1
