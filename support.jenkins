@@ -1,6 +1,8 @@
 @Library('sharedlib')_
 pipeline {
-    agent any
+    agent {
+        label 'pillooapi'
+    }
 
     tools {
         git 'mygit'
@@ -16,7 +18,7 @@ pipeline {
         PROD_GIT_REPO = 'git@github.com:Fairsoftsolution/Support.git'
 
         // Deployment directories for each environment
-        DEPLOY_DIR_PROD = 'C:\\websites\\support.fairsoftservices.com'
+        DEPLOY_DIR_PROD = 'C:\\websites\\support.pillo.ai'
         
         // Credentials IDs
         GIT_CREDENTIALS_ID = 'support'
@@ -51,7 +53,7 @@ pipeline {
                 script {
                     build.deployApp([
                      DEPLOY_DIR: "${env.DEPLOY_DIR_PROD}",
-                     SITE_NAME: 'support.fairsoftservices.com',
+                     SITE_NAME: 'support.pillo.ai',
                      SOURCE_DIR: "%WORKSPACE%\\Support"
                     ])
                 }
