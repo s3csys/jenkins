@@ -84,15 +84,15 @@ def deployApp(envParams) {
     timeout /t 10 >nul    
 
     REM === Verify App Pool Status ===
-    for /f "tokens=2 delims=: " %%A in ('%windir%\system32\inetsrv\appcmd list apppool /name:"!SITE_NAME!" /text:state') do set APPPOOL_STATE=%%A
+    for /f "tokens=2 delims=: " %%A in ('%windir%\\system32\\inetsrv\\appcmd list apppool /name:"!SITE_NAME!" /text:state') do set APPPOOL_STATE=%%A
 
     if /i "!APPPOOL_STATE!" NEQ "Started" (
         echo [WARN] App Pool stopped unexpectedly after recycle. Attempting restart...
-        %windir%\system32\inetsrv\appcmd start apppool /apppool.name:"!SITE_NAME!"
+        %windir%\\system32\\inetsrv\\appcmd start apppool /apppool.name:"!SITE_NAME!"
         timeout /t 5 >nul
 
         REM === Recheck App Pool Status After Restart Attempt ===
-        for /f "tokens=2 delims=: " %%B in ('%windir%\system32\inetsrv\appcmd list apppool /name:"!SITE_NAME!" /text:state') do set APPPOOL_STATE_AFTER=%%B
+        for /f "tokens=2 delims=: " %%B in ('%windir%\\system32\\inetsrv\\appcmd list apppool /name:"!SITE_NAME!" /text:state') do set APPPOOL_STATE_AFTER=%%B
 
         if /i "!APPPOOL_STATE_AFTER!"=="Started" (
             echo [INFO] App Pool successfully restarted and is now running.
