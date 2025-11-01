@@ -83,19 +83,17 @@ def deployApp(envParams) {
     %windir%\\system32\\inetsrv\\appcmd.exe recycle apppool /apppool.name:"!SITE_NAME!"
     timeout /t 10 >nul    
 
-    REM === Verify App Pool Status ===
-    for /f "tokens=2 delims=: " %%A in ('%windir%\\system32\\inetsrv\\appcmd list apppool /name:"!SITE_NAME!" /text:state') do set APPPOOL_STATE=%%A
-
+    REM === Verify App Pool Status using PowerShell (Jenkins safe as Input redirection is not supported) ===
+    for /f %%A in ('powershell -NoProfile -Command "(Get-WebAppPoolState -Name ''!SITE_NAME!'').Value"') do set APPPOOL_STATE=%%A
     if /i "!APPPOOL_STATE!" NEQ "Started" (
         echo [WARN] App Pool stopped unexpectedly after recycle. Attempting restart...
-        %windir%\\system32\\inetsrv\\appcmd start apppool /apppool.name:"!SITE_NAME!"
+        powershell -NoProfile -Command "Start-WebAppPool -Name ''!SITE_NAME!''"
         timeout /t 5 >nul
 
-        REM === Recheck App Pool Status After Restart Attempt ===
-        for /f "tokens=2 delims=: " %%B in ('%windir%\\system32\\inetsrv\\appcmd list apppool /name:"!SITE_NAME!" /text:state') do set APPPOOL_STATE_AFTER=%%B
+        for /f %%B in ('powershell -NoProfile -Command "(Get-WebAppPoolState -Name ''!SITE_NAME!'').Value"') do set APPPOOL_STATE_AFTER=%%B
 
         if /i "!APPPOOL_STATE_AFTER!"=="Started" (
-            echo [INFO] App Pool successfully restarted and is now running.
+            echo [INFO] App Pool successfully restarted and is now running normally.
         ) else (
             echo [ERROR] App Pool failed to start even after restart attempt. Please check IIS logs or Event Viewer.
         )
