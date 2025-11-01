@@ -81,7 +81,37 @@ def deployApp(envParams) {
     REM === Recycling App Pool ===
     echo [INFO] Recycling App Pool: !SITE_NAME!
     %windir%\\system32\\inetsrv\\appcmd.exe recycle apppool /apppool.name:"!SITE_NAME!"
-    
+    timeout /t 10 >nul    
+
+    REM === Verify App Pool Status ===
+    for /f "tokens=2 delims=: " %%A in ('%windir%\system32\inetsrv\appcmd list apppool /name:"!SITE_NAME!" /text:state') do set APPPOOL_STATE=%%A
+
+    if /i "!APPPOOL_STATE!" NEQ "Started" (
+        echo [WARN] App Pool stopped unexpectedly after recycle. Attempting restart...
+        %windir%\system32\inetsrv\appcmd start apppool /apppool.name:"!SITE_NAME!"
+        timeout /t 5 >nul
+
+        REM === Recheck App Pool Status After Restart Attempt ===
+        for /f "tokens=2 delims=: " %%B in ('%windir%\system32\inetsrv\appcmd list apppool /name:"!SITE_NAME!" /text:state') do set APPPOOL_STATE_AFTER=%%B
+
+        if /i "!APPPOOL_STATE_AFTER!"=="Started" (
+            echo [INFO] App Pool successfully restarted and is now running.
+        ) else (
+            echo [ERROR] App Pool failed to start even after restart attempt. Please check IIS logs or Event Viewer.
+        )
+    ) else (
+        echo [INFO] App Pool recycled successfully and is running normally.
+    )
+
+    REM ===  Validate IIS Configuration ===
+    echo [INFO] Validating IIS configuration for site "!SITE_NAME!"
+    %windir%\\system32\\inetsrv\\appcmd list config "!SITE_NAME!" >nul 2>&1
+    if !errorlevel! neq 0 (
+        echo [ERROR] Configuration validation failed for site "!SITE_NAME!".
+        echo [ERROR] Possible malformed web.config file detected.
+        exit /b 1
+    )
+
     REM === Starting the site to ensure it's running ===
     echo [INFO] Starting Site: !SITE_NAME!
     %windir%\\system32\\inetsrv\\appcmd.exe start site "!SITE_NAME!"
@@ -97,6 +127,6 @@ def deployApp(envParams) {
     popd
 
     endlocal
-    echo [SUCCESS] Deployment completed
+    echo [SUCCESS] Deployment completed successfully
     """
 }
