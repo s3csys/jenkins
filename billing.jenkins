@@ -1,6 +1,9 @@
 @Library('sharedlib')_
 pipeline {
-    agent any
+    agent {
+        label 'pillooapi'
+    }
+
 
     tools {
         git 'mygit'
@@ -18,9 +21,9 @@ pipeline {
         DEV_GIT_REPO = 'git@github.com:Fairsoftsolution/PillooWeb.git'
 
         // Deployment directories for each environment
-        DEPLOY_DIR_DEV = 'C:\\websites\\billing.fairsoftservices.com\\dev'
-        DEPLOY_DIR_STAGING = 'C:\\websites\\billing.fairsoftservices.com\\staging'        
-        DEPLOY_DIR_PROD = 'C:\\websites\\billing.fairsoftservices.com\\prod'
+        DEPLOY_DIR_DEV = 'C:\\websites\\billing.pilloo.ai\\dev'
+        DEPLOY_DIR_STAGING = 'C:\\websites\\billing.pilloo.ai\\staging'        
+        DEPLOY_DIR_PROD = 'C:\\websites\\billing.pilloo.ai\\prod'
 
         API_SERVER_DEV = 'dev-billing'
         API_SERVER_STAGING = 'staging-billing'        
@@ -64,6 +67,10 @@ pipeline {
                      API_SERVER: "${env.API_SERVER_DEV}"
                     ])
                 }
+                echo "Moving the web.config"
+                bat """
+                move ${env.DEPLOY_DIR_DEV}\\current\\wwwroot\\web.config ${env.DEPLOY_DIR_DEV}\\current\\web.config
+                """                
             }
         }
 
@@ -79,6 +86,10 @@ pipeline {
                      API_SERVER: "${env.API_SERVER_STAGING}"
                     ])
                 }
+                echo "Moving the web.config"
+                bat """
+                move ${env.DEPLOY_DIR_STAGING}\\current\\wwwroot\\web.config ${env.DEPLOY_DIR_STAGING}\\current\\web.config
+                """
             }
         }
 
@@ -94,6 +105,10 @@ pipeline {
                         API_SERVER: "${env.API_SERVER_PROD}"
                     ])
                 }
+                echo "Moving the web.config"
+                bat """
+                move ${env.DEPLOY_DIR_PROD}\\current\\wwwroot\\web.config ${env.DEPLOY_DIR_PROD}\\current\\web.config
+                """
             }
         }
     }
