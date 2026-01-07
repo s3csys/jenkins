@@ -9,12 +9,14 @@ pipeline {
     }
 
     parameters {
+        booleanParam(name: 'DEPLOY_DEV', defaultValue: false, description: 'Deploy to Dev environment (manual/remote)')
         booleanParam(name: 'DEPLOY_PROD', defaultValue: false, description: 'Deploy to Production environment (manual/remote)')
         string(name: 'BRANCH', defaultValue: 'testing', description: 'Git branch to build')
     }
 
     environment {
         DEV_GIT_REPO = 'git@github.com:Rammohan-BookXpert/Pilloo-APIs.git'
+        DEPLOY_DIR_DEV = 'C:\\websites\\api.pilloo.ai\\dev'
         DEPLOY_DIR_PROD = 'C:\\websites\\api.pilloo.ai'
         GIT_CREDENTIALS_ID = 'pillooapi'
         RELEASES_TO_KEEP = '3'
@@ -30,10 +32,24 @@ pipeline {
         }
 
         stage('Checkout Code') {
-            when { expression { params.DEPLOY_PROD } }
+            when { expression { params.DEPLOY_DEV } }
             steps {
                 echo "Checking out ${DEV_GIT_REPO} repo branch ${params.BRANCH} for Dev deployment"
                 git branch: params.BRANCH, url: env.DEV_GIT_REPO, credentialsId: env.GIT_CREDENTIALS_ID
+            }
+        }
+
+        stage('Deploy to dev') {
+            when { expression { params.DEPLOY_DEV } }
+            steps {
+                echo "Deploying to dev environment..."
+                script {
+                    build.deployApp([
+                        DEPLOY_DIR: "${env.DEPLOY_DIR_DEV}",
+                        SITE_NAME: 'dev-api.pilloo.ai',
+                        SOURCE_DIR: "%WORKSPACE%\\PillooAI"
+                    ])
+                }
             }
         }
 
@@ -45,7 +61,7 @@ pipeline {
                     build.deployApp([
                         DEPLOY_DIR: "${env.DEPLOY_DIR_PROD}",
                         SITE_NAME: 'api.pilloo.ai',
-                        SOURCE_DIR: "%WORKSPACE%\\PillooAI"
+                        SOURCE_DIR: "${env.DEPLOY_DIR_DEV}\\current"
                     ])
                 }
             }
