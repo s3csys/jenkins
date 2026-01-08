@@ -17,7 +17,7 @@ pipeline {
     environment {
         DEV_GIT_REPO = 'git@github.com:Rammohan-BookXpert/Pilloo-APIs.git'
         DEPLOY_DIR_DEV = 'C:\\websites\\api.pilloo.ai\\dev'
-        DEPLOY_DIR_PROD = 'C:\\websites\\api.pilloo.ai'
+        DEPLOY_DIR_PROD = 'C:\\websites\\api.pilloo.ai\\prod'
         GIT_CREDENTIALS_ID = 'pillooapi'
         RELEASES_TO_KEEP = '3'
         DISCORD_WEBHOOK_URL = credentials('discord-webhook-url')
