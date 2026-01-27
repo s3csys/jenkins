@@ -15,7 +15,7 @@ pipeline {
 
     environment {
         // Git repo for Prod environment (pilloo)
-        PROD_GIT_REPO = 'git@github.com:Fairsoftsolution/Pilloo.git'
+        PROD_GIT_REPO = 'git@github.com:Fairsoftsolution/PillooWebsite.git'
 
         // Deployment directories for each environment
         DEPLOY_DIR_PROD = 'C:\\websites\\pilloo.ai'
@@ -23,6 +23,8 @@ pipeline {
         // Credentials IDs
         GIT_CREDENTIALS_ID = 'pilloo'
         
+        API_SERVER_PROD = 'pilloo'
+
         // Deployment settings
         RELEASES_TO_KEEP = '3'
         
@@ -49,14 +51,19 @@ pipeline {
         stage('Deploy to PROD') {
             when { expression { params.DEPLOY_PROD } }
             steps {
-                echo "Deploying to PROD environment..."
                 script {
-                    build.deployApp([
+                    api.deployApp([
                      DEPLOY_DIR: "${env.DEPLOY_DIR_PROD}",
                      SITE_NAME: 'pilloo.ai',
-                     SOURCE_DIR: "%WORKSPACE%\\WebApplication1"
+                     SOURCE_DIR: "%WORKSPACE%\\WebsitePilloo.Server\\Publish",
+                     API_SERVER: "${env.API_SERVER_PROD}"
                     ])
                 }
+                echo "Moving the web.config"
+                bat """
+                move ${env.DEPLOY_DIR_PROD}\\current\\wwwroot\\web.config ${env.DEPLOY_DIR_PROD}\\current\\web.config
+                copy ${env.DEPLOY_DIR_PROD}\\shared\\wwwroot-web.config ${env.DEPLOY_DIR_PROD}\\current\\wwwroot\\web.config
+                """
             }
         }
     }
