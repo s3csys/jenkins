@@ -70,6 +70,7 @@ pipeline {
                 echo "Moving the web.config"
                 bat """
                 move ${env.DEPLOY_DIR_DEV}\\current\\wwwroot\\web.config ${env.DEPLOY_DIR_DEV}\\current\\web.config
+                copy ${env.DEPLOY_DIR_DEV}\\shared\\wwwroot-web.config ${env.DEPLOY_DIR_DEV}\\current\\wwwroot\\web.config
                 """
             }
         }
@@ -89,6 +90,7 @@ pipeline {
                 echo "Moving the web.config"
                 bat """
                 move ${env.DEPLOY_DIR_STAGING}\\current\\wwwroot\\web.config ${env.DEPLOY_DIR_STAGING}\\current\\web.config
+                copy ${env.DEPLOY_DIR_STAGING}\\shared\\wwwroot-web.config ${env.DEPLOY_DIR_STAGING}\\current\\wwwroot\\web.config
                 """
             }
         }
@@ -108,6 +110,7 @@ pipeline {
                 echo "Moving the web.config"
                 bat """
                 move ${env.DEPLOY_DIR_PROD}\\current\\wwwroot\\web.config ${env.DEPLOY_DIR_PROD}\\current\\web.config
+                copy ${env.DEPLOY_DIR_PROD}\\shared\\wwwroot-web.config ${env.DEPLOY_DIR_PROD}\\current\\wwwroot\\web.config
                 """
             }
         }
