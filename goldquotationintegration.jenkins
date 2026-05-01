@@ -19,7 +19,7 @@ pipeline {
         DEPLOY_DIR_PROD = 'C:\\websites\\goldquotation.fairsoftservices.com\\Integrations\\goldquotations'
 
         // Virtual environment paths
-        VENV_PATH_PROD = 'C:\\websites\\goldquotation.fairsoftservices.com\\Integrations\\golduotations\\venv_gold_quotation'
+        VENV_PATH_PROD = 'C:\\websites\\goldquotation.fairsoftservices.com\\Integrations\\goldquotations\\venv_gold_quotation'
 
         // Service names
         SERVICE_NAME_PROD = 'goldquotation_integration'
