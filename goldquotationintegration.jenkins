@@ -1,0 +1,142 @@
+@Library('sharedlib')_
+pipeline {
+    agent any
+
+    tools {
+        git 'mygit'
+    }
+
+    parameters {
+        booleanParam(name: 'DEPLOY_PROD', defaultValue: false, description: 'Deploy to Production environment (manual/remote)')
+        string(name: 'BRANCH', defaultValue: 'main', description: 'Git branch to build')
+    }
+
+    environment {
+        // Git repo for the project
+        GIT_REPO = 'git@github.com:fss-naveen/Gold-Quotation.git'
+
+        // Deployment directories
+        DEPLOY_DIR_PROD = 'C:\\websites\\goldquotation.fairsoftservices.com\\Integrations\\goldquotations'
+
+        // Virtual environment paths
+        VENV_PATH_PROD = 'C:\\websites\\goldquotation.fairsoftservices.com\\Integrations\\golduotations\\venv_gold_quotation'
+
+        // Service names
+        SERVICE_NAME_PROD = 'goldquotation_integration'
+        
+        // Credentials IDs
+        GIT_CREDENTIALS_ID = 'goldquotation_integration'
+        
+        // Deployment settings
+        RELEASES_TO_KEEP = '3'
+        
+        // Notification settings
+        DISCORD_WEBHOOK_URL = credentials('discord-webhook-url')
+    }
+
+    stages {
+        stage('Clean Workspace') {
+            steps {
+                echo 'Cleaning the workspace before deployment...'
+                cleanWs()
+            }
+        }
+        
+        stage('Checkout Code') {
+            when { expression { params.DEPLOY_PROD } }
+            steps {
+                echo "Checking out ${env.GIT_REPO} repo branch ${params.BRANCH}"
+                git branch: params.BRANCH, url: env.GIT_REPO, credentialsId: env.GIT_CREDENTIALS_ID
+            }
+        }
+
+        stage('Deploy to PROD') {
+            when { expression { params.DEPLOY_PROD } }
+            steps {
+                echo "Deploying to Prod environment..."
+                script {
+                    python.deployApp([
+                        DEPLOY_DIR: "${env.DEPLOY_DIR_PROD}",
+                        SOURCE_DIR: "%WORKSPACE%",
+                        VENV_PATH: "${env.VENV_PATH_PROD}",
+                        SERVICE_NAME: "${env.SERVICE_NAME_PROD}"
+                    ])
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            echo 'Deployment pipeline completed successfully!'
+            script {
+                def deployEnv = params.DEPLOY_PROD ? 'Production' : 'None'
+                def deployDetails = "Branch: ${params.BRANCH}\nDeployment Directory: ${env.DEPLOY_DIR_PROD}"
+                def deployTime = new Date().format('yyyy-MM-dd HH:mm:ss')
+                
+                if (deployEnv != 'None') {
+                    try {
+                        discordSend (
+                            webhookURL: env.DISCORD_WEBHOOK_URL,
+                            title: "✅ goldquotation ${deployEnv} Deployment - SUCCESS",
+                            description: "${deployEnv} deployment completed successfully\n\n**Details:**\n${deployDetails}",
+                            footer: "Build: #${BUILD_NUMBER} | ${deployTime}",
+                            link: env.BUILD_URL,
+                            result: currentBuild.currentResult,
+                            thumbnail: "https://jenkins.io/images/logos/jenkins/jenkins.png",
+                            customUsername: "Jenkins goldquotation Pipeline"
+                        )
+                    } catch (Exception e) {
+                        echo "Warning: Could not send Discord notification: ${e.message}"
+                    }
+                }
+            }
+        }
+        failure {
+            echo 'Deployment pipeline failed. Check logs for details.'
+            script {
+                def deployEnv = params.DEPLOY_PROD ? 'Production' : 'None'
+                def deployTime = new Date().format('yyyy-MM-dd HH:mm:ss')
+                
+                if (deployEnv != 'None') {
+                    try {
+                        discordSend (
+                            webhookURL: env.DISCORD_WEBHOOK_URL,
+                            title: "❌ goldquotation ${deployEnv} Deployment - FAILED",
+                            description: "${deployEnv} deployment failed!\n\n**Build Details:**\nBranch: ${params.BRANCH}",
+                            footer: "Build: #${BUILD_NUMBER} | ${deployTime}",
+                            link: env.BUILD_URL,
+                            result: currentBuild.currentResult,
+                            thumbnail: "https://jenkins.io/images/logos/jenkins/jenkins.png",
+                            customUsername: "Jenkins goldquotation Pipeline"
+                        )
+                    } catch (Exception e) {
+                        echo "Warning: Could not send Discord notification: ${e.message}"
+                    }
+                }
+            }
+        }
+        always {
+            echo 'Performing cleanup operations...'
+            cleanWs()
+            echo 'Cleanup completed successfully.'
+            
+            script {
+                try {
+                    discordSend (
+                        webhookURL: env.DISCORD_WEBHOOK_URL,
+                        title: "goldquotation Pipeline - Build #${BUILD_NUMBER} Complete",
+                        description: "Build completed with result: ${currentBuild.currentResult}\nTotal execution time: ${currentBuild.durationString}",
+                        footer: "${new Date().format('yyyy-MM-dd HH:mm:ss')}",
+                        link: env.BUILD_URL,
+                        result: currentBuild.currentResult,
+                        thumbnail: "https://jenkins.io/images/logos/jenkins/jenkins.png",
+                        customUsername: "Jenkins goldquotation Pipeline"
+                    )
+                } catch (Exception e) {
+                    echo "Warning: Could not send Discord notification: ${e.message}"
+                }
+            }
+        }
+    }
+}
