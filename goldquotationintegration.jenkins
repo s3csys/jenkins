@@ -18,8 +18,8 @@ pipeline {
         // Deployment directories
         DEPLOY_DIR_PROD = 'C:\\websites\\goldquotation.fairsoftservices.com\\Integrations\\goldquotations'
 
-        // Virtual environment paths
-        VENV_PATH_PROD = 'C:\\websites\\goldquotation.fairsoftservices.com\\Integrations\\goldquotations\\venv_gold_quotation'
+        // Virtual environment name
+        VENV_NAME_PROD = 'venv'
 
         // Service names
         SERVICE_NAME_PROD = 'goldquotation_integration'
@@ -58,8 +58,8 @@ pipeline {
                     python.deployApp([
                         DEPLOY_DIR: "${env.DEPLOY_DIR_PROD}",
                         SOURCE_DIR: "%WORKSPACE%",
-                        VENV_PATH: "${env.VENV_PATH_PROD}",
-                        SERVICE_NAME: "${env.SERVICE_NAME_PROD}"
+                        SERVICE_NAME: "${env.SERVICE_NAME_PROD}",
+                        VENV_NAME: "${env.VENV_NAME_PROD}"
                     ])
                 }
             }

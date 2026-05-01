@@ -1,6 +1,9 @@
 def deployApp(envParams) {
     bat """
     @echo off
+    REM === Enable Long Path Support in Windows Registry ===
+    REM === reg add "HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Control\\FileSystem" /v LongPathsEnabled /t REG_DWORD /d 1 /f >nul 2>&1 ===
+
     REM === Enable delayed expansion for runtime variable updates ===
     setlocal enabledelayedexpansion
 
@@ -9,16 +12,27 @@ def deployApp(envParams) {
     set "RELEASES_DIR=!DEPLOY_DIR!\\releases"
     set "SHARED_DIR=!DEPLOY_DIR!\\shared"
     set "SOURCE_DIR=${envParams.SOURCE_DIR}"
-    set "VENV_PATH=${envParams.VENV_PATH}"
+    set "VENV_NAME=${envParams.VENV_NAME}"
     set "SERVICE_NAME=${envParams.SERVICE_NAME}"
 
     REM === Generate timestamp using PowerShell ===
     for /f %%i in ('powershell -NoProfile -Command "Get-Date -Format 'dddd-MMMM-dd-yyyy-HH-mm-tt'"') do set "TIMESTAMP=%%i"
     set "NEW_RELEASE_DIR=!RELEASES_DIR!\\!TIMESTAMP!"
+    set "VENV_PATH=!NEW_RELEASE_DIR!\\!VENV_NAME!"
 
     REM === Create directories if they do not exist ===
-    if not exist "!RELEASES_DIR!" mkdir "!RELEASES_DIR!"
-    if not exist "!NEW_RELEASE_DIR!" mkdir "!NEW_RELEASE_DIR!"
+    if not exist "!RELEASES_DIR!" (
+        mkdir "!RELEASES_DIR!" || (
+            echo [ERROR] Failed to create RELEASES_DIR: !RELEASES_DIR!
+            exit /b 1
+        )
+    )
+    if not exist "!NEW_RELEASE_DIR!" (
+        mkdir "!NEW_RELEASE_DIR!" || (
+            echo [ERROR] Failed to create NEW_RELEASE_DIR: !NEW_RELEASE_DIR!
+            exit /b 1
+        )
+    )
 
     REM === Robocopy source to new release directory ===
     echo [INFO] Copying files from !SOURCE_DIR! to !NEW_RELEASE_DIR!
@@ -26,6 +40,19 @@ def deployApp(envParams) {
     if !errorlevel! GEQ 8 (
         echo [ERROR] Robocopy failed with error level !errorlevel!
         exit /b 1
+    )
+
+    REM === Copy requirements.txt from shared directory if it exists ===
+    if exist "!SHARED_DIR!\\requirements.txt" (
+        echo [INFO] Copying requirements.txt from !SHARED_DIR! to !NEW_RELEASE_DIR!
+        copy /Y "!SHARED_DIR!\\requirements.txt" "!NEW_RELEASE_DIR!\\requirements.txt" || (
+            echo [ERROR] Failed to copy requirements.txt from shared directory
+            exit /b 1
+        )
+        copy /Y "!SHARED_DIR!\\env" "!NEW_RELEASE_DIR!\\.env" || (
+            echo [ERROR] Failed to copy env from shared directory
+            exit /b 1
+        )
     )
 
     REM === Create virtual environment if it doesn't exist ===
@@ -42,9 +69,13 @@ def deployApp(envParams) {
     echo [INFO] Updating dependencies in venv at !VENV_PATH!
     if exist "!NEW_RELEASE_DIR!\\requirements.txt" (
         "!VENV_PATH!\\Scripts\\python.exe" -m pip install --upgrade pip
+        if !errorlevel! neq 0 (
+            echo [ERROR] Failed to upgrade pip
+            exit /b 1
+        )
         "!VENV_PATH!\\Scripts\\python.exe" -m pip install -r "!NEW_RELEASE_DIR!\\requirements.txt"
         if !errorlevel! neq 0 (
-            echo [ERROR] Failed to install dependencies
+            echo [ERROR] Failed to install dependencies from requirements.txt
             exit /b 1
         )
     ) else (
@@ -54,11 +85,14 @@ def deployApp(envParams) {
     REM === Update 'current' symlink ===
     if exist "!DEPLOY_DIR!\\current" (
         echo [INFO] Removing previous symlink
-        rmdir "!DEPLOY_DIR!\\current"
+        rmdir "!DEPLOY_DIR!\\current" || (
+            echo [ERROR] Failed to remove old 'current' symlink
+            exit /b 1
+        )
     )
     echo [INFO] Creating new symlink to !NEW_RELEASE_DIR!
     mklink /D "!DEPLOY_DIR!\\current" "!NEW_RELEASE_DIR!" || (
-        echo [ERROR] Failed to create current symlink
+        echo [ERROR] Failed to create new 'current' symlink
         exit /b 1
     )
 
